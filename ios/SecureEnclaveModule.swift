@@ -141,8 +141,7 @@ public class SecureEnclaveModule: Module {
           kSecAttrIsPermanent as String     : kCFBooleanTrue,
           kSecAttrApplicationTag as String  : tag,
           kSecAttrAccessControl as String   : access,
-          kSecUseAuthenticationUI as String : kSecUseAuthenticationUIAllow,
-          kSecAttrSynchronizable as String  : kCFBooleanTrue
+          kSecUseAuthenticationUI as String : kSecUseAuthenticationUIAllow
         ]
       ]
 
