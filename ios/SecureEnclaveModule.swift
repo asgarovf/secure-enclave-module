@@ -125,7 +125,7 @@ public class SecureEnclaveModule: Module {
 
       let access = SecAccessControlCreateWithFlags(
         kCFAllocatorDefault,
-        kSecAttrAccessibleWhenUnlocked,
+        kSecAttrSynchronizable,
         flags,
         nil
       )!
