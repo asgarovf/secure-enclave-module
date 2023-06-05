@@ -125,7 +125,7 @@ public class SecureEnclaveModule: Module {
 
       let access = SecAccessControlCreateWithFlags(
         kCFAllocatorDefault,
-        kSecAttrSynchronizable,
+        kSecAttrAccessibleWhenUnlocked,
         flags,
         nil
       )!
@@ -138,10 +138,11 @@ public class SecureEnclaveModule: Module {
         // DEV: Using this flag causes -25293 key generation error
         // kSecAttrTokenID as String       : kSecAttrTokenIDSecureEnclave,
         kSecPrivateKeyAttrs as String   : [
-          kSecAttrIsPermanent as String     : true,
+          kSecAttrIsPermanent as String     : kCFBooleanTrue,
           kSecAttrApplicationTag as String  : tag,
           kSecAttrAccessControl as String   : access,
-          kSecUseAuthenticationUI as String : kSecUseAuthenticationUIAllow
+          kSecUseAuthenticationUI as String : kSecUseAuthenticationUIAllow,
+          kSecAttrSynchronizable as String  : kCFBooleanTrue
         ]
       ]
 
