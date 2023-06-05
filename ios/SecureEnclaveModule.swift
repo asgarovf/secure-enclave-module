@@ -42,7 +42,7 @@ public class SecureEnclaveModule: Module {
       kSecAttrKeyType as String         : kSecAttrKeyTypeEC,
       kSecReturnRef as String           : true
     ]
-    
+
     // Get key using the query
     var item: CFTypeRef?
     let status = SecItemCopyMatching(query as CFDictionary, &item)
@@ -50,7 +50,7 @@ public class SecureEnclaveModule: Module {
       print("[SecureEnclaveModule] No key found")
       return nil
     }
-    
+
     return (item as! SecKey)
   }
 
@@ -64,25 +64,25 @@ public class SecureEnclaveModule: Module {
       let array = message.hexaBytes
       let messageData = CFDataCreate(kCFAllocatorDefault, array, array.count)!//message as! CFData
       print(messageData)
-    
+
     guard SecKeyIsAlgorithmSupported( keyHandle, .sign, SecureEnclaveModule.algorithm ) else {
       throw NSError(domain: "SecureEnclaveModule: Algorithm Not Supported", code: 1, userInfo: nil)
     }
-    
+
     var error: Unmanaged<CFError>?
-    
+
     let signedMessage = SecKeyCreateSignature(
       keyHandle,
       SecureEnclaveModule.algorithm,
       messageData,
       &error
     )
-    
+
     guard signedMessage != nil else {
       print(error!.takeUnretainedValue() as Error)
       throw NSError(domain: "SecureEnclaveModule: Signing Failed", code: 2, userInfo: nil)
     }
-    
+
     return (signedMessage! as Data).hexEncodedString()
   }
 
@@ -122,14 +122,14 @@ public class SecureEnclaveModule: Module {
 
     AsyncFunction("generateKeyPair") { (alias: String, promise: Promise) in
       let flags: SecAccessControlCreateFlags = .biometryAny;
-    
+
       let access = SecAccessControlCreateWithFlags(
         kCFAllocatorDefault,
-        kSecAttrAccessibleWhenUnlockedThisDeviceOnly,
+        kSecAttrAccessibleWhenUnlocked,
         flags,
         nil
       )!
-    
+
       let tag = alias.data(using: .utf8)!
       let attributes: [String: Any] = [
         kSecClass as String             : kSecClassKey,
@@ -144,9 +144,9 @@ public class SecureEnclaveModule: Module {
           kSecUseAuthenticationUI as String : kSecUseAuthenticationUIAllow
         ]
       ]
-      
+
       var error: Unmanaged<CFError>?
-    
+
       guard let privateKey = SecKeyCreateRandomKey(
         attributes as CFDictionary,
         &error
@@ -155,12 +155,12 @@ public class SecureEnclaveModule: Module {
         print(error!.takeRetainedValue() as Error)
         return
       }
-    
+
       guard let publicKey = SecKeyCopyPublicKey(privateKey) else {
         promise.reject("ERR_PUB_KEY_GET", "Can't get public key")
         return
       }
-    
+
       guard let pubExt = SecKeyCopyExternalRepresentation(
         publicKey,
         &error
@@ -168,17 +168,17 @@ public class SecureEnclaveModule: Module {
         promise.reject("ERR_PUB_KEY_EXPORT", "Can't export public key")
         return
       }
-    
+
       // Add curve header
       // DEV: this might be unnecessary
       let publicKeyDER = prependCurveHeader(pubKeyData: pubExt as Data)
-    
+
       promise.resolve((pubExt as Data).hexEncodedString());
     }
 
     AsyncFunction("deleteKeyPair") { (alias: String, promise: Promise) in
       let tag = String(alias).data(using: .utf8)!
-      
+
       let query: [String: Any] = [
         kSecClass as String               : kSecClassKey,
         kSecAttrApplicationTag as String  : tag,
@@ -187,12 +187,12 @@ public class SecureEnclaveModule: Module {
       ]
 
       let status = SecItemDelete(query as CFDictionary)
-      
+
       guard status == errSecSuccess else {
         promise.reject("ERR_PAIR_DELETE", "Can't delete keypair")
         return;
       }
-      
+
       promise.resolve(true);
     }
 
@@ -205,7 +205,7 @@ public class SecureEnclaveModule: Module {
         promise.reject("ERR_KEY_HANDLE_GET", "Can't get the key handle")
         return
       }
-      
+
       // Try to sign the message
       do {
         let signature = try sign(message, keyHandle!)
